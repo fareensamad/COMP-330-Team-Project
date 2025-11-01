@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Top 4 Albums — Profile</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="container">
+      <h1>Profile — Top Albums & Songs</h1>
+
+      <!-- Albums section -->
+      <section class="form-card">
+        <p class="lead">Add your top 4 albums (title + artist). Save to your profile and preview below.</p>
+
+        <form id="albumsForm" autocomplete="off">
+          <div id="albumsList">
+            <!-- album entries inserted by JS -->
+          </div>
+
+          <div class="actions">
+            <button type="button" id="saveBtn" class="btn primary">Save Albums</button>
+            <button type="button" id="clearBtn" class="btn">Clear Albums</button>
+            <button type="button" id="exportBtn" class="btn">Export Albums JSON</button>
+            <label class="btn file-btn">
+              Import Albums
+              <input id="importInput" type="file" accept="application/json" hidden>
+            </label>
+          </div>
+        </form>
+      </section>
+
+      <!-- Songs section -->
+      <section class="form-card">
+        <p class="lead">Add your current top 5 songs (title + artist). Save separately from albums.</p>
+
+        <form id="songsForm" autocomplete="off">
+          <div id="songsList">
+            <!-- song entries inserted by JS -->
+          </div>
+
+          <div class="actions">
+            <button type="button" id="saveSongsBtn" class="btn primary">Save Songs</button>
+            <button type="button" id="clearSongsBtn" class="btn">Clear Songs</button>
+            <button type="button" id="exportSongsBtn" class="btn">Export Songs JSON</button>
+            <label class="btn file-btn">
+              Import Songs
+              <input id="importSongsInput" type="file" accept="application/json" hidden>
+            </label>
+          </div>
+        </form>
+      </section>
+
+      <!-- Preview section (albums + songs) -->
+      <section class="preview-card">
+        <h2>Your Profile Preview</h2>
+        <h3>Albums</h3>
+        <div id="profilePreview" class="profile">
+          <p class="empty">No albums saved yet.</p>
+        </div>
+        <h3 style="margin-top:12px">Top 5 Songs</h3>
+        <div id="songsPreview" class="profile">
+          <p class="empty">No songs saved yet.</p>
+        </div>
+      </section>
+
+      <footer class="note">Data is stored locally in your browser using localStorage under keys <code>top4Albums</code> and <code>top5Songs</code>.</footer>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
