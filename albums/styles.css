@@ -1,0 +1,30 @@
+:root{
+  --bg:#f6f8fb;
+  --card:#ffffff;
+  --accent:#4b6cff;
+  --muted:#6b7280;
+  --success:#16a34a;
+}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; margin:0; background:var(--bg); color:#0f172a}
+.container{max-width:880px;margin:28px auto;padding:20px}
+h1{margin:0 0 12px}
+.lead{color:var(--muted);margin:0 0 12px}
+.form-card,.preview-card{background:var(--card);border-radius:8px;padding:18px;margin-bottom:18px;box-shadow:0 1px 2px rgba(16,24,40,0.04)}
+.album-row{display:grid;grid-template-columns:1fr 1fr 80px;gap:10px;margin-bottom:10px;align-items:center}
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px}
+input[type="text"]{padding:8px 10px;border:1px solid #e6eef9;border-radius:6px;font-size:14px;width:100%}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{background:#fff;border:1px solid #dbe7ff;padding:8px 12px;border-radius:6px;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,var(--accent),#3955ff);color:white;border:none}
+.file-btn{position:relative;overflow:hidden}
+.file-btn input{position:absolute;left:0;top:0;opacity:0}
+.profile{min-height:80px}
+.profile .item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px dashed #eef2ff}
+.profile .title{font-weight:600}
+.profile .artist{color:var(--muted)}
+.empty{color:var(--muted)}
+footer.note{font-size:13px;color:var(--muted);text-align:center;margin-top:6px}
+
+@media (max-width:600px){.album-row{grid-template-columns:1fr;}
+  .album-row > div:nth-child(3){display:flex;gap:8px}}
