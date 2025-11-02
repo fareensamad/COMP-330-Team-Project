@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Top 4 Albums — Profile</title>
+    <title>Top 5 Albums — Profile</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -32,8 +32,7 @@
 
       <!-- Albums section -->
       <section class="form-card">
-        <p class="lead">Add your top 4 albums (title + artist). For each album you can also write a short review and give a five-star rating. Save to your profile and preview below.</p>
-
+        <p class="lead">Add your top 5 albums (title + artist). </p>
         <form id="albumsForm" autocomplete="off">
           <div id="albumsList">
             <!-- album entries inserted by JS -->
@@ -78,12 +77,16 @@
 
         <div id="reviewForm">
           <label for="reviewTargetType">Target</label>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-            <select id="reviewTargetType">
-              <option value="album">Album</option>
-              <option value="song">Song</option>
-            </select>
-            <select id="reviewTargetItem"></select>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="reviewTargetType">
+                <option value="album">Album</option>
+                <option value="song">Song</option>
+              </select>
+              <input id="reviewTargetName" type="text" placeholder="Album or song title" />
+              <input id="reviewTargetArtist" type="text" placeholder="Artist (optional)" />
+            </div>
+            <small class="muted">Type the album or song title and artist instead of choosing from a list.</small>
           </div>
 
           <label>Rating</label>
@@ -119,7 +122,7 @@
         </div>
       </section>
 
-      <footer class="note">Data is stored locally in your browser using localStorage under keys <code>top4Albums</code> and <code>top5Songs</code>.</footer>
+  <footer class="note">Data is stored locally in your browser using localStorage under keys <code>top5Albums</code> and <code>top5Songs</code>.</footer>
     </main>
 
     <script src="app.js"></script>

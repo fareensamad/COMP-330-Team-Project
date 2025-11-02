@@ -1,4 +1,4 @@
-const KEY = 'top4Albums';
+const KEY = 'top5Albums';
 const KEY_SONGS = 'top5Songs';
 const albumsList = document.getElementById('albumsList');
 const profilePreview = document.getElementById('profilePreview');
@@ -59,7 +59,7 @@ function createAlbumRow(index, data = {}){
 
 function buildForm(){
   albumsList.innerHTML = '';
-  for(let i=0;i<4;i++){
+  for(let i=0;i<5;i++){
     albumsList.appendChild(createAlbumRow(i));
   }
 }
@@ -116,7 +116,7 @@ function buildSongsForm(){
 
 function getFormData(){
   const arr = [];
-  for(let i=0;i<4;i++){
+  for(let i=0;i<5;i++){
     const title = (document.querySelector(`[name=title-${i}]`)?.value || '').trim();
     const artist = (document.querySelector(`[name=artist-${i}]`)?.value || '').trim();
     arr.push({title, artist});
@@ -474,24 +474,14 @@ function loadReviews(){
 function saveReviews(arr){ localStorage.setItem(KEY_REVIEWS, JSON.stringify(arr)); }
 
 function populateReviewTargetItems(){
-  const typeSel = document.getElementById('reviewTargetType');
-  const itemSel = document.getElementById('reviewTargetItem');
-  if(!typeSel || !itemSel) return;
-  const type = typeSel.value;
-  itemSel.innerHTML = '';
-  if(type === 'album'){
-    const raw = localStorage.getItem(KEY) || '[]';
-    let arr = [];
-    try{ arr = JSON.parse(raw); }catch(e){ arr = []; }
-    if(arr.length===0){ const opt = document.createElement('option'); opt.value='0'; opt.textContent='(no albums saved)'; itemSel.appendChild(opt); return; }
-    arr.forEach((a,i)=>{ const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1}. ${a.title || '(untitled)'}`; itemSel.appendChild(opt); });
-  } else {
-    const raw = localStorage.getItem(KEY_SONGS) || '[]';
-    let arr = [];
-    try{ arr = JSON.parse(raw); }catch(e){ arr = []; }
-    if(arr.length===0){ const opt = document.createElement('option'); opt.value='0'; opt.textContent='(no songs saved)'; itemSel.appendChild(opt); return; }
-    arr.forEach((s,i)=>{ const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1}. ${s.title || '(untitled)'}`; itemSel.appendChild(opt); });
-  }
+  // With free-text review target inputs (title + artist) we don't populate a dropdown.
+  // Keep this function to avoid breaking callers; clear the inputs when called.
+  const nameEl = document.getElementById('reviewTargetName');
+  const artistEl = document.getElementById('reviewTargetArtist');
+  if(!nameEl || !artistEl) return;
+  // clear inputs when type changes or when called to reset
+  nameEl.value = '';
+  artistEl.value = '';
 }
 
 function buildReviewRatingControl(){
@@ -519,29 +509,46 @@ function clearReviewForm(){
   const text = document.getElementById('reviewText');
   if(typeSel) typeSel.value = 'album';
   if(text) text.value = '';
+  const nameEl = document.getElementById('reviewTargetName');
+  const artistEl = document.getElementById('reviewTargetArtist');
+  if(nameEl) nameEl.value = '';
+  if(artistEl) artistEl.value = '';
   buildReviewRatingControl();
   const addBtn = document.getElementById('addReviewBtn');
   if(addBtn) addBtn.textContent = 'Add Review';
+  // no dropdown population needed for free-text inputs
   populateReviewTargetItems();
 }
 
 function addOrSaveReview(){
   const typeSel = document.getElementById('reviewTargetType');
-  const itemSel = document.getElementById('reviewTargetItem');
+  const nameEl = document.getElementById('reviewTargetName');
+  const artistEl = document.getElementById('reviewTargetArtist');
   const textEl = document.getElementById('reviewText');
-  if(!typeSel || !itemSel || !textEl) return;
+  if(!typeSel || !nameEl || !artistEl || !textEl) return;
   const targetType = typeSel.value;
-  const targetIndex = Number(itemSel.value || 0);
+  const targetName = (nameEl.value || '').trim();
+  const targetArtist = (artistEl.value || '').trim();
   const text = textEl.value.trim();
   const rating = Number(currentReviewRating || 0);
+  if(!targetName){ alert('Please enter the album or song title.'); return; }
   if(!text && rating===0){ alert('Please add a rating or some review text.'); return; }
   const reviews = loadReviews();
   if(editingReviewId){
     const idx = reviews.findIndex(r=> r.id === editingReviewId);
-    if(idx >= 0){ reviews[idx].targetType = targetType; reviews[idx].targetIndex = targetIndex; reviews[idx].rating = rating; reviews[idx].text = text; reviews[idx].updatedAt = new Date().toISOString(); }
+    if(idx >= 0){
+      reviews[idx].targetType = targetType;
+      reviews[idx].targetName = targetName;
+      reviews[idx].targetArtist = targetArtist;
+      reviews[idx].rating = rating;
+      reviews[idx].text = text;
+      reviews[idx].updatedAt = new Date().toISOString();
+      // remove legacy targetIndex if present
+      if('targetIndex' in reviews[idx]) delete reviews[idx].targetIndex;
+    }
     editingReviewId = null;
   } else {
-    const review = { id: Date.now().toString(), targetType, targetIndex, rating, text, createdAt: new Date().toISOString() };
+    const review = { id: Date.now().toString(), targetType, targetName, targetArtist, rating, text, createdAt: new Date().toISOString() };
     reviews.unshift(review);
   }
   saveReviews(reviews);
@@ -559,14 +566,18 @@ function renderReviews(){
     const item = document.createElement('div'); item.className = 'review-item';
     const meta = document.createElement('div'); meta.className = 'meta';
     const target = document.createElement('div'); target.className = 'target';
-    // resolve target title
+    // resolve target title — prefer explicit targetName/targetArtist (free-text), fall back to legacy targetIndex
     let title = '(unknown)';
-    if(r.targetType === 'album'){
-      try{ const arr = JSON.parse(localStorage.getItem(KEY) || '[]'); if(arr[r.targetIndex]) title = `${r.targetIndex+1}. ${arr[r.targetIndex].title || '(untitled)'}`; }
-      catch(e){}
-    } else {
-      try{ const arr = JSON.parse(localStorage.getItem(KEY_SONGS) || '[]'); if(arr[r.targetIndex]) title = `${r.targetIndex+1}. ${arr[r.targetIndex].title || '(untitled)'}`; }
-      catch(e){}
+    if(r.targetName){
+      title = r.targetName + (r.targetArtist ? ` — ${r.targetArtist}` : '');
+    } else if(typeof r.targetIndex === 'number'){
+      if(r.targetType === 'album'){
+        try{ const arr = JSON.parse(localStorage.getItem(KEY) || '[]'); if(arr[r.targetIndex]) title = `${r.targetIndex+1}. ${arr[r.targetIndex].title || '(untitled)'}`; }
+        catch(e){}
+      } else {
+        try{ const arr = JSON.parse(localStorage.getItem(KEY_SONGS) || '[]'); if(arr[r.targetIndex]) title = `${r.targetIndex+1}. ${arr[r.targetIndex].title || '(untitled)'}`; }
+        catch(e){}
+      }
     }
     target.textContent = `${r.targetType === 'album' ? 'Album' : 'Song'} — ${title}`;
     meta.appendChild(target);
@@ -592,11 +603,26 @@ function editReview(id){
   const r = reviews.find(rr=> rr.id === id); if(!r) return;
   editingReviewId = id;
   const typeSel = document.getElementById('reviewTargetType');
-  const itemSel = document.getElementById('reviewTargetItem');
+  const nameEl = document.getElementById('reviewTargetName');
+  const artistEl = document.getElementById('reviewTargetArtist');
   const textEl = document.getElementById('reviewText');
   if(typeSel) typeSel.value = r.targetType;
-  populateReviewTargetItems();
-  if(itemSel) itemSel.value = r.targetIndex;
+  // populate free-text inputs from review (prefer explicit saved fields, else try legacy index lookup)
+  if(nameEl && artistEl){
+    if(r.targetName){
+      nameEl.value = r.targetName;
+      artistEl.value = r.targetArtist || '';
+    } else if(typeof r.targetIndex === 'number'){
+      // legacy: resolve from stored albums/songs
+      if(r.targetType === 'album'){
+        try{ const arr = JSON.parse(localStorage.getItem(KEY) || '[]'); if(arr[r.targetIndex]){ nameEl.value = arr[r.targetIndex].title || ''; artistEl.value = arr[r.targetIndex].artist || ''; } }
+        catch(e){}
+      } else {
+        try{ const arr = JSON.parse(localStorage.getItem(KEY_SONGS) || '[]'); if(arr[r.targetIndex]){ nameEl.value = arr[r.targetIndex].title || ''; artistEl.value = arr[r.targetIndex].artist || ''; } }
+        catch(e){}
+      }
+    }
+  }
   if(textEl) textEl.value = r.text || '';
   // set rating visuals
   currentReviewRating = Number(r.rating || 0);
