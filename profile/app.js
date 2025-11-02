@@ -4,6 +4,15 @@ const albumsList = document.getElementById('albumsList');
 const profilePreview = document.getElementById('profilePreview');
 const songsList = document.getElementById('songsList');
 const songsPreview = document.getElementById('songsPreview');
+// avatar/profile image
+const KEY_AVATAR = 'profileImage';
+const avatarInput = document.getElementById('avatarInput');
+const avatarPreviewImg = document.getElementById('avatarPreviewImg');
+// reviews
+const KEY_REVIEWS = 'reviews';
+let editingReviewId = null;
+let currentReviewRating = 0;
+
 
 function createAlbumRow(index, data = {}){
   const wrapper = document.createElement('div');
@@ -134,6 +143,8 @@ function saveProfile(){
   }
   localStorage.setItem(KEY, JSON.stringify(data));
   renderProfile();
+  // refresh review target dropdowns
+  try{ populateReviewTargetItems(); }catch(e){}
   alert('Profile saved locally.');
 }
 
@@ -145,6 +156,7 @@ function saveSongs(){
   }
   localStorage.setItem(KEY_SONGS, JSON.stringify(data));
   renderSongs();
+  try{ populateReviewTargetItems(); }catch(e){}
   alert('Songs saved locally.');
 }
 
@@ -188,7 +200,6 @@ function renderProfile(){
     const artist = document.createElement('div');
     artist.className = 'artist';
     artist.textContent = entry.artist ? `by ${entry.artist}` : '';
-
     meta.appendChild(title);
     meta.appendChild(artist);
     item.appendChild(idx);
@@ -227,6 +238,67 @@ function renderSongs(){
     item.appendChild(idx);
     item.appendChild(meta);
     songsPreview.appendChild(item);
+  });
+}
+
+// Avatar handling: store image as data URL in localStorage
+function handleAvatarFile(file, cb){
+  if(!file) return cb && cb(new Error('No file'));
+  // limit size to ~2MB for localStorage friendliness
+  const maxBytes = 2 * 1024 * 1024;
+  if(file.size > maxBytes) return cb && cb(new Error('File too large (max 2MB)'));
+  const reader = new FileReader();
+  reader.onload = e => cb && cb(null, e.target.result);
+  reader.onerror = e => cb && cb(new Error('Failed reading file'));
+  reader.readAsDataURL(file);
+}
+
+function saveAvatar(dataUrl){
+  if(!dataUrl) return;
+  localStorage.setItem(KEY_AVATAR, dataUrl);
+  renderAvatar();
+}
+
+function removeAvatar(){
+  localStorage.removeItem(KEY_AVATAR);
+  renderAvatar();
+}
+
+function renderAvatar(){
+  const data = localStorage.getItem(KEY_AVATAR);
+  if(!data){
+    avatarPreviewImg.style.display = 'none';
+    const empty = avatarPreviewImg.parentElement.querySelector('.avatar-empty');
+    if(empty) empty.style.display = 'block';
+    return;
+  }
+  avatarPreviewImg.src = data;
+  avatarPreviewImg.style.display = 'block';
+  const empty = avatarPreviewImg.parentElement.querySelector('.avatar-empty');
+  if(empty) empty.style.display = 'none';
+}
+
+function exportAvatar(){
+  const data = localStorage.getItem(KEY_AVATAR);
+  if(!data){ alert('No avatar to export'); return; }
+  // data is a Data URL: convert to blob
+  fetch(data).then(res=>res.blob()).then(blob=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'profile-image.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }).catch(()=>alert('Export failed'));
+}
+
+function importAvatar(file){
+  handleAvatarFile(file, (err, dataUrl)=>{
+    if(err){ alert('Import failed: ' + err.message); return; }
+    saveAvatar(dataUrl);
+    alert('Imported avatar.');
   });
 }
 
@@ -273,6 +345,7 @@ function populateFormFromStorage(){
     const a = document.querySelector(`[name=artist-${i}]`);
     if(t) t.value = (data[i] && data[i].title) ? data[i].title : '';
     if(a) a.value = (data[i] && data[i].artist) ? data[i].artist : '';
+    // only populate title and artist for albums (reviews are managed in the Reviews section)
   }
 }
 
@@ -286,6 +359,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const clearSongsBtn = document.getElementById('clearSongsBtn');
   const exportSongsBtn = document.getElementById('exportSongsBtn');
   const importSongsInput = document.getElementById('importSongsInput');
+  // avatar controls
+  const saveAvatarBtn = document.getElementById('saveAvatarBtn');
+  const removeAvatarBtn = document.getElementById('removeAvatarBtn');
+  const exportAvatarBtn = document.getElementById('exportAvatarBtn');
+  const importAvatarInput = document.getElementById('importAvatarInput');
 
   buildForm();
   populateFormFromStorage();
@@ -293,6 +371,25 @@ document.addEventListener('DOMContentLoaded', ()=>{
   buildSongsForm();
   populateSongsFromStorage();
   renderSongs();
+  // avatar init
+  populateSongsFromStorage();
+  // wire avatar events
+  if(avatarInput){
+    avatarInput.addEventListener('change', (e)=>{
+      const f = e.target.files && e.target.files[0];
+      if(f) handleAvatarFile(f, (err, dataUrl)=>{ if(err) alert(err.message); else avatarPreviewImg.src = dataUrl; });
+      e.target.value = null;
+    });
+  }
+  if(saveAvatarBtn) saveAvatarBtn.addEventListener('click', ()=>{
+    // if preview has src use it
+    if(avatarPreviewImg && avatarPreviewImg.src) saveAvatar(avatarPreviewImg.src);
+    else alert('Please choose an image first.');
+  });
+  if(removeAvatarBtn) removeAvatarBtn.addEventListener('click', removeAvatar);
+  if(exportAvatarBtn) exportAvatarBtn.addEventListener('click', exportAvatar);
+  if(importAvatarInput) importAvatarInput.addEventListener('change', (e)=>{ const f = e.target.files && e.target.files[0]; if(f) importAvatar(f); e.target.value = null; });
+  renderAvatar();
 
   saveBtn.addEventListener('click', saveProfile);
   clearBtn.addEventListener('click', clearProfile);
@@ -321,6 +418,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(f) importSongs(f);
     e.target.value = null;
   });
+  // reviews wiring
+  const reviewType = document.getElementById('reviewTargetType');
+  const reviewAddBtn = document.getElementById('addReviewBtn');
+  const reviewClearBtn = document.getElementById('clearReviewFormBtn');
+  const reviewExportBtn = document.getElementById('exportReviewsBtn');
+  const reviewImportInput = document.getElementById('importReviewsInput');
+  if(reviewType) reviewType.addEventListener('change', populateReviewTargetItems);
+  buildReviewRatingControl();
+  populateReviewTargetItems();
+  renderReviews();
+  if(reviewAddBtn) reviewAddBtn.addEventListener('click', addOrSaveReview);
+  if(reviewClearBtn) reviewClearBtn.addEventListener('click', clearReviewForm);
+  if(reviewExportBtn) reviewExportBtn.addEventListener('click', exportReviews);
+  if(reviewImportInput) reviewImportInput.addEventListener('change', (e)=>{ const f = e.target.files && e.target.files[0]; if(f) importReviews(f); e.target.value = null; });
 });
 
 function populateSongsFromStorage(){
@@ -335,6 +446,7 @@ function populateSongsFromStorage(){
     const a = document.querySelector(`[name=song-artist-${i}]`);
     if(t) t.value = (data[i] && data[i].title) ? data[i].title : '';
     if(a) a.value = (data[i] && data[i].artist) ? data[i].artist : '';
+    // only populate title and artist for songs (reviews are managed in the Reviews section)
   }
 }
 
@@ -351,6 +463,165 @@ function importSongs(file){
     }catch(err){
       alert('Import failed: ' + err.message);
     }
+  };
+  reader.readAsText(file);
+}
+
+/* -------- Reviews functionality -------- */
+function loadReviews(){
+  try{ return JSON.parse(localStorage.getItem(KEY_REVIEWS) || '[]'); }catch(e){ return []; }
+}
+function saveReviews(arr){ localStorage.setItem(KEY_REVIEWS, JSON.stringify(arr)); }
+
+function populateReviewTargetItems(){
+  const typeSel = document.getElementById('reviewTargetType');
+  const itemSel = document.getElementById('reviewTargetItem');
+  if(!typeSel || !itemSel) return;
+  const type = typeSel.value;
+  itemSel.innerHTML = '';
+  if(type === 'album'){
+    const raw = localStorage.getItem(KEY) || '[]';
+    let arr = [];
+    try{ arr = JSON.parse(raw); }catch(e){ arr = []; }
+    if(arr.length===0){ const opt = document.createElement('option'); opt.value='0'; opt.textContent='(no albums saved)'; itemSel.appendChild(opt); return; }
+    arr.forEach((a,i)=>{ const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1}. ${a.title || '(untitled)'}`; itemSel.appendChild(opt); });
+  } else {
+    const raw = localStorage.getItem(KEY_SONGS) || '[]';
+    let arr = [];
+    try{ arr = JSON.parse(raw); }catch(e){ arr = []; }
+    if(arr.length===0){ const opt = document.createElement('option'); opt.value='0'; opt.textContent='(no songs saved)'; itemSel.appendChild(opt); return; }
+    arr.forEach((s,i)=>{ const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1}. ${s.title || '(untitled)'}`; itemSel.appendChild(opt); });
+  }
+}
+
+function buildReviewRatingControl(){
+  const container = document.getElementById('reviewRating');
+  if(!container) return;
+  container.innerHTML = '';
+  currentReviewRating = 0;
+  for(let s=1;s<=5;s++){
+    const star = document.createElement('span');
+    star.className = 'star';
+    star.textContent = '★';
+    star.dataset.value = s;
+    star.addEventListener('click', ()=>{
+      currentReviewRating = s;
+      [...container.querySelectorAll('.star')].forEach(sp=> sp.classList.toggle('filled', Number(sp.dataset.value) <= s));
+    });
+    container.appendChild(star);
+  }
+}
+
+function clearReviewForm(){
+  editingReviewId = null;
+  currentReviewRating = 0;
+  const typeSel = document.getElementById('reviewTargetType');
+  const text = document.getElementById('reviewText');
+  if(typeSel) typeSel.value = 'album';
+  if(text) text.value = '';
+  buildReviewRatingControl();
+  const addBtn = document.getElementById('addReviewBtn');
+  if(addBtn) addBtn.textContent = 'Add Review';
+  populateReviewTargetItems();
+}
+
+function addOrSaveReview(){
+  const typeSel = document.getElementById('reviewTargetType');
+  const itemSel = document.getElementById('reviewTargetItem');
+  const textEl = document.getElementById('reviewText');
+  if(!typeSel || !itemSel || !textEl) return;
+  const targetType = typeSel.value;
+  const targetIndex = Number(itemSel.value || 0);
+  const text = textEl.value.trim();
+  const rating = Number(currentReviewRating || 0);
+  if(!text && rating===0){ alert('Please add a rating or some review text.'); return; }
+  const reviews = loadReviews();
+  if(editingReviewId){
+    const idx = reviews.findIndex(r=> r.id === editingReviewId);
+    if(idx >= 0){ reviews[idx].targetType = targetType; reviews[idx].targetIndex = targetIndex; reviews[idx].rating = rating; reviews[idx].text = text; reviews[idx].updatedAt = new Date().toISOString(); }
+    editingReviewId = null;
+  } else {
+    const review = { id: Date.now().toString(), targetType, targetIndex, rating, text, createdAt: new Date().toISOString() };
+    reviews.unshift(review);
+  }
+  saveReviews(reviews);
+  renderReviews();
+  clearReviewForm();
+}
+
+function renderReviews(){
+  const container = document.getElementById('reviewsList');
+  if(!container) return;
+  const reviews = loadReviews();
+  container.innerHTML = '';
+  if(!reviews || reviews.length===0){ container.innerHTML = '<p class="empty">No reviews yet.</p>'; return; }
+  reviews.forEach(r => {
+    const item = document.createElement('div'); item.className = 'review-item';
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const target = document.createElement('div'); target.className = 'target';
+    // resolve target title
+    let title = '(unknown)';
+    if(r.targetType === 'album'){
+      try{ const arr = JSON.parse(localStorage.getItem(KEY) || '[]'); if(arr[r.targetIndex]) title = `${r.targetIndex+1}. ${arr[r.targetIndex].title || '(untitled)'}`; }
+      catch(e){}
+    } else {
+      try{ const arr = JSON.parse(localStorage.getItem(KEY_SONGS) || '[]'); if(arr[r.targetIndex]) title = `${r.targetIndex+1}. ${arr[r.targetIndex].title || '(untitled)'}`; }
+      catch(e){}
+    }
+    target.textContent = `${r.targetType === 'album' ? 'Album' : 'Song'} — ${title}`;
+    meta.appendChild(target);
+    // stars
+    const ratingWrap = document.createElement('div'); ratingWrap.className = 'rating';
+    for(let s=1;s<=5;s++){ const star = document.createElement('span'); star.className = 'star' + ((r.rating||0) >= s ? ' filled':''); star.textContent = '★'; ratingWrap.appendChild(star); }
+    meta.appendChild(ratingWrap);
+    // text
+    const txt = document.createElement('div'); txt.className = 'review-text'; txt.textContent = r.text || '';
+    meta.appendChild(txt);
+    // controls
+    const controls = document.createElement('div'); controls.className = 'review-controls';
+    const editBtn = document.createElement('button'); editBtn.className = 'btn'; editBtn.textContent = 'Edit'; editBtn.addEventListener('click', ()=> editReview(r.id));
+    const delBtn = document.createElement('button'); delBtn.className = 'btn'; delBtn.textContent = 'Delete'; delBtn.addEventListener('click', ()=>{ if(confirm('Delete this review?')){ deleteReview(r.id); } });
+    controls.appendChild(editBtn); controls.appendChild(delBtn);
+    item.appendChild(meta); item.appendChild(controls);
+    container.appendChild(item);
+  });
+}
+
+function editReview(id){
+  const reviews = loadReviews();
+  const r = reviews.find(rr=> rr.id === id); if(!r) return;
+  editingReviewId = id;
+  const typeSel = document.getElementById('reviewTargetType');
+  const itemSel = document.getElementById('reviewTargetItem');
+  const textEl = document.getElementById('reviewText');
+  if(typeSel) typeSel.value = r.targetType;
+  populateReviewTargetItems();
+  if(itemSel) itemSel.value = r.targetIndex;
+  if(textEl) textEl.value = r.text || '';
+  // set rating visuals
+  currentReviewRating = Number(r.rating || 0);
+  const container = document.getElementById('reviewRating');
+  if(container){ [...container.querySelectorAll('.star')].forEach(sp=> sp.classList.toggle('filled', Number(sp.dataset.value) <= currentReviewRating)); }
+  const addBtn = document.getElementById('addReviewBtn'); if(addBtn) addBtn.textContent = 'Save Review';
+}
+
+function deleteReview(id){
+  const arr = loadReviews().filter(r=> r.id !== id);
+  saveReviews(arr);
+  renderReviews();
+}
+
+function exportReviews(){
+  const raw = localStorage.getItem(KEY_REVIEWS) || '[]';
+  const blob = new Blob([raw], {type:'application/json'});
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'reviews.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+
+function importReviews(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{ const data = JSON.parse(e.target.result); if(!Array.isArray(data)) throw new Error('JSON must be an array'); saveReviews(data); renderReviews(); alert('Imported reviews'); }
+    catch(err){ alert('Import failed: '+err.message); }
   };
   reader.readAsText(file);
 }

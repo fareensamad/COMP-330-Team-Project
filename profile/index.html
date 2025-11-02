@@ -10,9 +10,29 @@
     <main class="container">
       <h1>Profile — Top Albums & Songs</h1>
 
+      <!-- Profile picture section -->
+      <section class="form-card">
+        <p class="lead">Upload a profile picture (optional). The image is stored locally in your browser.</p>
+        <div class="avatar-row">
+          <div class="avatar-preview">
+            <img id="avatarPreviewImg" alt="Profile preview" src="" />
+            <div class="avatar-empty">No image</div>
+          </div>
+          <div class="avatar-controls">
+            <input id="avatarInput" type="file" accept="image/*">
+            <div class="actions">
+              <button type="button" id="saveAvatarBtn" class="btn primary">Save Picture</button>
+              <button type="button" id="removeAvatarBtn" class="btn">Remove</button>
+              <button type="button" id="exportAvatarBtn" class="btn">Export Image</button>
+              <label class="btn file-btn">Import Image<input id="importAvatarInput" type="file" accept="image/*" hidden></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Albums section -->
       <section class="form-card">
-        <p class="lead">Add your top 4 albums (title + artist). Save to your profile and preview below.</p>
+        <p class="lead">Add your top 4 albums (title + artist). For each album you can also write a short review and give a five-star rating. Save to your profile and preview below.</p>
 
         <form id="albumsForm" autocomplete="off">
           <div id="albumsList">
@@ -33,7 +53,7 @@
 
       <!-- Songs section -->
       <section class="form-card">
-        <p class="lead">Add your current top 5 songs (title + artist). Save separately from albums.</p>
+        <p class="lead">Add your current top 5 songs (title + artist). For each song you can write a short review and give a five-star rating. Save separately from albums.</p>
 
         <form id="songsForm" autocomplete="off">
           <div id="songsList">
@@ -50,6 +70,40 @@
             </label>
           </div>
         </form>
+      </section>
+
+      <!-- Reviews section -->
+      <section class="form-card" id="reviewsSection">
+        <p class="lead">Write reviews for your saved albums or songs (5-star rating + text). Reviews are stored separately and can be exported/imported.</p>
+
+        <div id="reviewForm">
+          <label for="reviewTargetType">Target</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+            <select id="reviewTargetType">
+              <option value="album">Album</option>
+              <option value="song">Song</option>
+            </select>
+            <select id="reviewTargetItem"></select>
+          </div>
+
+          <label>Rating</label>
+          <div id="reviewRating" class="rating" style="margin-bottom:8px"></div>
+
+          <label>Review</label>
+          <textarea id="reviewText" class="review-text" placeholder="Write a short review..."></textarea>
+
+          <div class="actions" style="margin-top:8px">
+            <button type="button" id="addReviewBtn" class="btn primary">Add Review</button>
+            <button type="button" id="clearReviewFormBtn" class="btn">Clear</button>
+            <button type="button" id="exportReviewsBtn" class="btn">Export Reviews</button>
+            <label class="btn file-btn">Import Reviews<input id="importReviewsInput" type="file" accept="application/json" hidden></label>
+          </div>
+        </div>
+
+        <h3 style="margin-top:12px">Saved Reviews</h3>
+        <div id="reviewsList" class="profile">
+          <p class="empty">No reviews yet.</p>
+        </div>
       </section>
 
       <!-- Preview section (albums + songs) -->
