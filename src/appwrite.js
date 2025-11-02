@@ -2,8 +2,8 @@ import { Client, Account, Databases } from "appwrite";
 
 // Initialize the Appwrite client
 const client = new Client()
-  .setEndpoint("https://nyc.cloud.appwrite.io/v1")
-  .setProject("69041b6200090131a18b"); 
+  .setEndpoint(VITE_APPWRITE_PROJECT_ID)
+  .setProject(VITE_APPWRITE_PROJECT_ID); 
 
 // Create Appwrite service instances
 export const account = new Account(client);
