@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Top 4 Albums — Profile</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="container">
+      <h1>Top 4 Albums</h1>
+
+      <section class="form-card">
+        <p class="lead">Add your top 4 albums (title + artist). Save to your profile and preview below.</p>
+
+        <form id="albumsForm" autocomplete="off">
+          <div id="albumsList">
+            <!-- album entries inserted by JS -->
+          </div>
+
+          <div class="actions">
+            <button type="button" id="saveBtn" class="btn primary">Save Profile</button>
+            <button type="button" id="clearBtn" class="btn">Clear</button>
+            <button type="button" id="exportBtn" class="btn">Export JSON</button>
+            <label class="btn file-btn">
+              Import
+              <input id="importInput" type="file" accept="application/json" hidden>
+            </label>
+          </div>
+        </form>
+      </section>
+
+      <section class="preview-card">
+        <h2>Your Profile Preview</h2>
+        <div id="profilePreview" class="profile">
+          <p class="empty">No profile saved yet.</p>
+        </div>
+      </section>
+
+      <footer class="note">Data is stored locally in your browser using localStorage under key <code>top4Albums</code>.</footer>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
