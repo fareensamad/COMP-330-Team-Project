@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top 5 Songs</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Top 5 Songs</h1>
+  </header>
+  <main>
+    <section id="songsSection">
+      <h2>Manage Your Top 5 Songs</h2>
+      <div id="songsList" class="form-container">
+        <!-- Song rows will be dynamically generated here -->
+      </div>
+      <div class="actions">
+        <button id="saveSongsBtn" class="btn">Save Songs</button>
+        <button id="clearSongsBtn" class="btn">Clear Songs</button>
+        <button id="exportSongsBtn" class="btn">Export Songs</button>
+        <label for="importSongsInput" class="btn">Import Songs</label>
+        <input type="file" id="importSongsInput" accept="application/json" hidden>
+      </div>
+    </section>
+    <section id="songsPreview">
+      <h2>Preview Your Top 5 Songs</h2>
+      <div class="preview-container">
+        <!-- Preview of saved songs will be dynamically generated here -->
+      </div>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2023 Your App</p>
+  </footer>
+  <script src="top5songs.js"></script>
+</body>
+</html>
