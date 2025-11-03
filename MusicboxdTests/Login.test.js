@@ -1,6 +1,3 @@
-// MUSICBOXD TEST SUITE - JAVASCRIPT VERSION
-// Framework: Jest
-// Services: Appwrite (mocked or integrated)
 import authService from "../services/authService"; // adjust path as needed
 
 // LOGIN TESTS
