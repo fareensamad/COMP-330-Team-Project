@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "appwrite": "^21.3.0",
+    "appwrite": "^21.4.0",
     "dotenv": "^17.2.3"
   },
   "name": "comp-330-team-project",

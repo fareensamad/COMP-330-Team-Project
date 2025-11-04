@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Musicboxd — Profile</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="container">
+      <h1>Musicboxd — Your Profile</h1>
+
+      <!-- Profile picture section -->
+      <section class="form-card">
+        <p class="lead">Upload a profile picture (optional). The image is stored locally in your browser.</p>
+        <div class="avatar-row">
+          <div class="avatar-preview">
+            <img id="avatarPreviewImg" alt="Profile preview" src="" />
+            <div class="avatar-empty">No image</div>
+          </div>
+          <div class="avatar-controls">
+            <input id="avatarInput" type="file" accept="image/*">
+            <div class="actions">
+              <button type="button" id="saveAvatarBtn" class="btn primary">Save Picture</button>
+              <button type="button" id="removeAvatarBtn" class="btn">Remove</button>
+              <button type="button" id="exportAvatarBtn" class="btn">Export Image</button>
+              <label class="btn file-btn">Import Image<input id="importAvatarInput" type="file" accept="image/*" hidden></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Albums section -->
+      <section class="form-card">
+        <p class="lead">Add your top 5 albums (title + artist). </p>
+        <form id="albumsForm" autocomplete="off">
+          <div id="albumsList">
+            <!-- album entries inserted by JS -->
+          </div>
+
+          <div class="actions">
+            <button type="button" id="saveBtn" class="btn primary">Save Albums</button>
+            <button type="button" id="clearBtn" class="btn">Clear Albums</button>
+            <button type="button" id="exportBtn" class="btn">Export Albums JSON</button>
+            <label class="btn file-btn">
+              Import Albums
+              <input id="importInput" type="file" accept="application/json" hidden>
+            </label>
+          </div>
+        </form>
+      </section>
+
+      <!-- Songs section -->
+      <section class="form-card">
+        <p class="lead">Add your current top 5 songs (title + artist). For each song you can write a short review and give a five-star rating. Save separately from albums.</p>
+
+        <form id="songsForm" autocomplete="off">
+          <div id="songsList">
+            <!-- song entries inserted by JS -->
+          </div>
+
+          <div class="actions">
+            <button type="button" id="saveSongsBtn" class="btn primary">Save Songs</button>
+            <button type="button" id="clearSongsBtn" class="btn">Clear Songs</button>
+            <button type="button" id="exportSongsBtn" class="btn">Export Songs JSON</button>
+            <label class="btn file-btn">
+              Import Songs
+              <input id="importSongsInput" type="file" accept="application/json" hidden>
+            </label>
+          </div>
+        </form>
+      </section>
+
+      <!-- Reviews section -->
+      <section class="form-card" id="reviewsSection">
+        <p class="lead">Write reviews for your saved albums or songs (5-star rating + text). Reviews are stored separately and can be exported/imported.</p>
+
+        <div id="reviewForm">
+          <label for="reviewTargetType">Target</label>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="reviewTargetType">
+                <option value="album">Album</option>
+                <option value="song">Song</option>
+              </select>
+              <input id="reviewTargetName" type="text" placeholder="Album or song title" />
+              <input id="reviewTargetArtist" type="text" placeholder="Artist (optional)" />
+            </div>
+            <small class="muted">Type the album or song title and artist instead of choosing from a list.</small>
+          </div>
+
+          <label>Rating</label>
+          <div id="reviewRating" class="rating" style="margin-bottom:8px"></div>
+
+          <label>Review</label>
+          <textarea id="reviewText" class="review-text" placeholder="Write a short review..."></textarea>
+
+          <div class="actions" style="margin-top:8px">
+            <button type="button" id="addReviewBtn" class="btn primary">Add Review</button>
+            <button type="button" id="clearReviewFormBtn" class="btn">Clear</button>
+            <button type="button" id="exportReviewsBtn" class="btn">Export Reviews</button>
+            <label class="btn file-btn">Import Reviews<input id="importReviewsInput" type="file" accept="application/json" hidden></label>
+          </div>
+        </div>
+
+        <h3 style="margin-top:12px">Saved Reviews</h3>
+        <div id="reviewsList" class="profile">
+          <p class="empty">No reviews yet.</p>
+        </div>
+      </section>
+
+      <!-- Preview section (albums + songs) -->
+      <section class="preview-card">
+        <h2>Your Profile Preview</h2>
+        <h3>Albums</h3>
+        <div id="profilePreview" class="profile">
+          <p class="empty">No albums saved yet.</p>
+        </div>
+        <h3 style="margin-top:12px">Top 5 Songs</h3>
+        <div id="songsPreview" class="profile">
+          <p class="empty">No songs saved yet.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Appwrite integration -->
+    <script type="module" src="/src/testAppwrite.js"></script>
+    <!-- Profile functionality -->
+    <script src="app.js"></script>
+  </body>
+</html>
