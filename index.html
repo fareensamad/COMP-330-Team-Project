@@ -7,8 +7,35 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <main class="container">
-      <h1>Musicboxd — Your Profile</h1>
+    <!-- Auth section (shown when not logged in) -->
+    <section id="authSection" class="form-card" style="max-width:880px;margin:28px auto;display:block">
+      <h2 style="margin-top:0">Welcome</h2>
+      <p class="lead">Sign in to access your profile. If you don't have an account yet, create one below.</p>
+      <form id="authForm" autocomplete="off">
+        <div style="display:grid;grid-template-columns:1fr;gap:10px;max-width:420px">
+          <div>
+            <label for="authEmail">Email</label>
+            <input id="authEmail" type="email" required placeholder="you@example.com" />
+          </div>
+          <div>
+            <label for="authPassword">Password</label>
+            <input id="authPassword" type="password" required placeholder="••••••••" />
+          </div>
+          <div class="actions">
+            <button id="authSubmit" type="submit" class="btn primary">Sign in</button>
+            <button id="toggleAuthMode" type="button" class="btn">Create account</button>
+          </div>
+          <small id="authHint" class="muted">Use your email and password to sign in.</small>
+          <div id="authError" class="muted" style="color:#b91c1c;display:none"></div>
+        </div>
+      </form>
+    </section>
+
+    <main id="appMain" class="container" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <h1>Musicboxd — Your Profile</h1>
+        <button id="logoutBtn" class="btn" style="display:none">Logout</button>
+      </div>
 
       <!-- Profile picture section -->
       <section class="form-card">
@@ -123,8 +150,10 @@
       </section>
     </main>
 
-    <!-- Appwrite integration -->
-    <script type="module" src="/src/testAppwrite.js"></script>
+  <!-- Appwrite integration -->
+  <script type="module" src="/src/testAppwrite.js"></script>
+  <!-- Auth gating (login/register + session) -->
+  <script type="module" src="/src/auth/login.js"></script>
     <!-- Profile functionality -->
     <script src="app.js"></script>
   </body>
