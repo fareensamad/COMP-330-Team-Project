@@ -2,9 +2,15 @@ import { account, databases } from '../appwrite.js';
 import { ID, Query } from 'appwrite';
 
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const PROFILES_COLLECTION_ID = import.meta.env.VITE_PROFILES_COLLECTION_ID;
-const REVIEWS_COLLECTION_ID = import.meta.env.VITE_REVIEWS_COLLECTION_ID;
-const LISTS_COLLECTION_ID = import.meta.env.VITE_LISTS_COLLECTION_ID;
+const PROFILES_COLLECTION_ID = import.meta.env.VITE_PROFILES_COLLECTION_ID || 'profiles';
+const REVIEWS_COLLECTION_ID = import.meta.env.VITE_REVIEWS_COLLECTION_ID || 'reviews';
+const LISTS_COLLECTION_ID = import.meta.env.VITE_LISTS_COLLECTION_ID || 'lists';
+
+// Validate that required env vars are present
+if (!DATABASE_ID) {
+  console.error('Missing VITE_APPWRITE_DATABASE_ID in .env file');
+  throw new Error('Database configuration missing. Please set VITE_APPWRITE_DATABASE_ID in your .env file.');
+}
 
 // ========== USER PROFILE OPERATIONS ==========
 
@@ -46,10 +52,10 @@ export async function getOrCreateProfile(userId) {
       {
         user_id: userId,
         username: '',
-        topAlbums: '[]',
-        topSongs: '[]',
+        top_albums: '[]',
+        top_songs: '[]',
         theme_color: '#1a1a1a',
-        profile_picture: ''
+        profile_picture: '' // Empty string is fine for String type
       }
     );
 
@@ -76,7 +82,7 @@ export async function updateTopAlbums(albums) {
       PROFILES_COLLECTION_ID,
       profile.$id,
       {
-        topAlbums: JSON.stringify(albums)
+        top_albums: JSON.stringify(albums)
       }
     );
 
@@ -98,12 +104,12 @@ export async function getTopAlbums() {
     const profile = await getOrCreateProfile(userId);
     
     // Parse the JSON string back to array
-    if (!profile.topAlbums) return [];
+    if (!profile.top_albums) return [];
     
     try {
-      return JSON.parse(profile.topAlbums);
+      return JSON.parse(profile.top_albums);
     } catch (e) {
-      console.error('Error parsing topAlbums:', e);
+      console.error('Error parsing top_albums:', e);
       return [];
     }
   } catch (error) {
@@ -127,7 +133,7 @@ export async function updateTopSongs(songs) {
       PROFILES_COLLECTION_ID,
       profile.$id,
       {
-        topSongs: JSON.stringify(songs)
+        top_songs: JSON.stringify(songs)
       }
     );
 
@@ -149,12 +155,12 @@ export async function getTopSongs() {
     const profile = await getOrCreateProfile(userId);
     
     // Parse the JSON string back to array
-    if (!profile.topSongs) return [];
+    if (!profile.top_songs) return [];
     
     try {
-      return JSON.parse(profile.topSongs);
+      return JSON.parse(profile.top_songs);
     } catch (e) {
-      console.error('Error parsing topSongs:', e);
+      console.error('Error parsing top_songs:', e);
       return [];
     }
   } catch (error) {
