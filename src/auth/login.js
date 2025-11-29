@@ -56,9 +56,17 @@ async function ensureLoggedIn(){
     console.error('Missing env vars:', { ENDPOINT, PROJECT_ID });
     return;
   }
+  
+  // Check if there's an active session
   const user = await getSession();
-  if(user){ showApp(); }
-  else { showAuth(); }
+  
+  if(user){
+    // User is logged in, show the app
+    showApp();
+  } else {
+    // No session, show auth form
+    showAuth();
+  }
 }
 
 async function login(email, password){
@@ -92,12 +100,19 @@ async function register(email, password){
 
 async function logout(){
   try {
+    // Clear the current session
     if(typeof account.deleteSession === 'function'){
       await account.deleteSession('current');
     } else if(typeof account.deleteSessions === 'function'){
       await account.deleteSessions();
     }
-  } catch(e){ /* ignore */ }
+    
+    // Clear any stored user data from localStorage if you're using it
+    localStorage.clear(); // Or be more specific if you only want to clear certain keys
+    
+  } catch(e){ 
+    console.log('Logout error (may be expected if no session):', e);
+  }
 }
 
 // Wire UI
