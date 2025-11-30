@@ -683,7 +683,13 @@ async function importReviews(file){
 
 // ========== INITIALIZATION ==========
 
-document.addEventListener('DOMContentLoaded', async ()=>{
+// Wait for authentication before initializing the app
+window.addEventListener('appwrite-authenticated', async (e) => {
+  console.log('User authenticated, initializing app for:', e.detail.user.email);
+  await initializeApp();
+});
+
+async function initializeApp() {
   const saveBtn = document.getElementById('saveBtn');
   const clearBtn = document.getElementById('clearBtn');
   const exportBtn = document.getElementById('exportBtn');
@@ -707,19 +713,19 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   await renderSongs();
 
   // Wire album events
-  saveBtn.addEventListener('click', saveProfile);
-  clearBtn.addEventListener('click', clearProfile);
-  exportBtn.addEventListener('click', exportProfile);
-  importInput.addEventListener('change', (e)=>{
+  if(saveBtn) saveBtn.addEventListener('click', saveProfile);
+  if(clearBtn) clearBtn.addEventListener('click', clearProfile);
+  if(exportBtn) exportBtn.addEventListener('click', exportProfile);
+  if(importInput) importInput.addEventListener('change', (e)=>{
     const f = e.target.files && e.target.files[0];
     if(f) importProfile(f);
     e.target.value = null;
   });
 
   // Wire song events
-  saveSongsBtn.addEventListener('click', saveSongs);
-  clearSongsBtn.addEventListener('click', clearSongs);
-  exportSongsBtn.addEventListener('click', async ()=>{
+  if(saveSongsBtn) saveSongsBtn.addEventListener('click', saveSongs);
+  if(clearSongsBtn) clearSongsBtn.addEventListener('click', clearSongs);
+  if(exportSongsBtn) exportSongsBtn.addEventListener('click', async ()=>{
     try {
       const data = await getTopSongs();
       const json = JSON.stringify(data, null, 2);
@@ -736,7 +742,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       alert('Export failed: ' + error.message);
     }
   });
-  importSongsInput.addEventListener('change', (e)=>{
+  if(importSongsInput) importSongsInput.addEventListener('change', (e)=>{
     const f = e.target.files && e.target.files[0];
     if(f) importSongs(f);
     e.target.value = null;
@@ -787,4 +793,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     if(f) importReviews(f); 
     e.target.value = null; 
   });
-});
+  
+  console.log('App fully initialized!');
+}

@@ -157,10 +157,12 @@ if(authForm){
         // verify session
         const me = await getSession();
         if(me){
+          window.dispatchEvent(new CustomEvent('appwrite-authenticated', { detail: { user: me } }));
           showApp();
         } else {
           showError('Signed in, but no session detected. Check Appwrite Platform origin settings (CORS).');
         }
+        
       } catch(err){
         // try to surface structured SDK error
         const msg = err?.message || err?.response?.message || 'Authentication failed';
