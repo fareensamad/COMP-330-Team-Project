@@ -1,3 +1,4 @@
+/*
 const KEY_SONGS = 'top5Songs';
 const songsList = document.getElementById('songsList');
 const songsPreview = document.getElementById('songsPreview');
@@ -165,3 +166,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+*/

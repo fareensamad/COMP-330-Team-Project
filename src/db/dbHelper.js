@@ -257,6 +257,50 @@ export async function deleteReview(reviewId) {
   }
 }
 
+// ========== PROFILE PICTURE OPERATIONS ==========
+
+/**
+ * Update user's profile picture
+ */
+export async function updateProfilePicture(base64Data) {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error('User not logged in');
+
+    const profile = await getOrCreateProfile(userId);
+
+    const updated = await databases.updateDocument(
+      DATABASE_ID,
+      PROFILES_COLLECTION_ID,
+      profile.$id,
+      {
+        profile_picture: base64Data || ''
+      }
+    );
+
+    return updated;
+  } catch (error) {
+    console.error('Error updating profile picture:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get user's profile picture
+ */
+export async function getProfilePicture() {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return '';
+
+    const profile = await getOrCreateProfile(userId);
+    return profile.profile_picture || '';
+  } catch (error) {
+    console.error('Error getting profile picture:', error);
+    return '';
+  }
+}
+
 // ========== LIST OPERATIONS ==========
 
 /**

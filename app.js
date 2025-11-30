@@ -1,4 +1,4 @@
-import { getTopAlbums, updateTopAlbums, getTopSongs, updateTopSongs, createReview, getUserReviews, updateReview, deleteReview as dbDeleteReview, getCurrentUserId, getOrCreateProfile } from './src/db/dbHelper.js';
+import { getTopAlbums, updateTopAlbums, getTopSongs, updateTopSongs, createReview, getUserReviews, updateReview, deleteReview as dbDeleteReview, getCurrentUserId, getOrCreateProfile, updateProfilePicture, getProfilePicture } from './src/db/dbHelper.js';
 import { databases } from './src/appwrite.js';
 
 const albumsList = document.getElementById('albumsList');
@@ -6,8 +6,7 @@ const profilePreview = document.getElementById('profilePreview');
 const songsList = document.getElementById('songsList');
 const songsPreview = document.getElementById('songsPreview');
 
-// Avatar/profile image - still using localStorage for now (images are tricky in DB)
-const KEY_AVATAR = 'profileImage';
+// Avatar/profile image - now using Appwrite database
 const avatarInput = document.getElementById('avatarInput');
 const avatarPreviewImg = document.getElementById('avatarPreviewImg');
 
@@ -372,7 +371,7 @@ async function importSongs(file){
   reader.readAsText(file);
 }
 
-// ========== AVATAR (Still using localStorage for now) ==========
+// ========== AVATAR (Using Appwrite Database) ==========
 
 function handleAvatarFile(file, cb){
   if(!file) return cb && cb(new Error('No file'));
@@ -384,35 +383,52 @@ function handleAvatarFile(file, cb){
   reader.readAsDataURL(file);
 }
 
-function saveAvatar(dataUrl){
+async function saveAvatar(dataUrl){
   if(!dataUrl) return;
-  localStorage.setItem(KEY_AVATAR, dataUrl);
-  renderAvatar();
-}
-
-function removeAvatar(){
-  localStorage.removeItem(KEY_AVATAR);
-  renderAvatar();
-}
-
-function renderAvatar(){
-  const data = localStorage.getItem(KEY_AVATAR);
-  if(!data){
-    avatarPreviewImg.style.display = 'none';
-    const empty = avatarPreviewImg.parentElement.querySelector('.avatar-empty');
-    if(empty) empty.style.display = 'block';
-    return;
+  try {
+    await updateProfilePicture(dataUrl);
+    await renderAvatar();
+    alert('Profile picture saved!');
+  } catch (error) {
+    console.error('Save avatar error:', error);
+    alert('Failed to save profile picture: ' + error.message);
   }
-  avatarPreviewImg.src = data;
-  avatarPreviewImg.style.display = 'block';
-  const empty = avatarPreviewImg.parentElement.querySelector('.avatar-empty');
-  if(empty) empty.style.display = 'none';
 }
 
-function exportAvatar(){
-  const data = localStorage.getItem(KEY_AVATAR);
-  if(!data){ alert('No avatar to export'); return; }
-  fetch(data).then(res=>res.blob()).then(blob=>{
+async function removeAvatar(){
+  try {
+    await updateProfilePicture('');
+    await renderAvatar();
+  } catch (error) {
+    console.error('Remove avatar error:', error);
+    alert('Failed to remove avatar: ' + error.message);
+  }
+}
+
+async function renderAvatar(){
+  try {
+    const data = await getProfilePicture();
+    if(!data){
+      avatarPreviewImg.style.display = 'none';
+      const empty = avatarPreviewImg.parentElement.querySelector('.avatar-empty');
+      if(empty) empty.style.display = 'block';
+      return;
+    }
+    avatarPreviewImg.src = data;
+    avatarPreviewImg.style.display = 'block';
+    const empty = avatarPreviewImg.parentElement.querySelector('.avatar-empty');
+    if(empty) empty.style.display = 'none';
+  } catch (error) {
+    console.error('Render avatar error:', error);
+  }
+}
+
+async function exportAvatar(){
+  try {
+    const data = await getProfilePicture();
+    if(!data){ alert('No avatar to export'); return; }
+    const response = await fetch(data);
+    const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -421,14 +437,16 @@ function exportAvatar(){
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-  }).catch(()=>alert('Export failed'));
+  } catch (error) {
+    console.error('Export avatar error:', error);
+    alert('Export failed: ' + error.message);
+  }
 }
 
 function importAvatar(file){
-  handleAvatarFile(file, (err, dataUrl)=>{
+  handleAvatarFile(file, async (err, dataUrl)=>{
     if(err){ alert('Import failed: ' + err.message); return; }
-    saveAvatar(dataUrl);
-    alert('Imported avatar.');
+    await saveAvatar(dataUrl);
   });
 }
 
@@ -735,9 +753,12 @@ document.addEventListener('DOMContentLoaded', async ()=>{
       e.target.value = null;
     });
   }
-  if(saveAvatarBtn) saveAvatarBtn.addEventListener('click', ()=>{
-    if(avatarPreviewImg && avatarPreviewImg.src) saveAvatar(avatarPreviewImg.src);
-    else alert('Please choose an image first.');
+  if(saveAvatarBtn) saveAvatarBtn.addEventListener('click', async ()=>{
+    if(avatarPreviewImg && avatarPreviewImg.src && avatarPreviewImg.src.startsWith('data:')) {
+      await saveAvatar(avatarPreviewImg.src);
+    } else {
+      alert('Please choose an image first.');
+    }
   });
   if(removeAvatarBtn) removeAvatarBtn.addEventListener('click', removeAvatar);
   if(exportAvatarBtn) exportAvatarBtn.addEventListener('click', exportAvatar);
@@ -746,7 +767,7 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     if(f) importAvatar(f); 
     e.target.value = null; 
   });
-  renderAvatar();
+  await renderAvatar();
 
   // Wire review events
   const reviewType = document.getElementById('reviewTargetType');
