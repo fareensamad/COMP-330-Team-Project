@@ -9,7 +9,7 @@
   <body>
     <!-- Auth section (shown when not logged in) -->
     <section id="authSection" class="form-card" style="max-width:880px;margin:28px auto;display:block">
-      <h2 style="margin-top:0">Welcome</h2>
+      <h2 style="margin-top:0">Welcome to Musicboxd! What's in your music box?</h2>
       <p class="lead">Sign in to access your profile. If you don't have an account yet, create one below.</p>
       <form id="authForm" autocomplete="off">
         <div style="display:grid;grid-template-columns:1fr;gap:10px;max-width:420px">
@@ -26,14 +26,14 @@
             <button id="toggleAuthMode" type="button" class="btn">Create account</button>
           </div>
           <small id="authHint" class="muted">Use your email and password to sign in.</small>
-          <div id="authError" class="muted" style="color:#b91c1c;display:none"></div>
+          <div id="authError" class="muted" style="color:#b70c0c;display:none"></div>
         </div>
       </form>
     </section>
 
     <main id="appMain" class="container" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-        <h1>Musicboxd — Your Profile</h1>
+        <h1>Your Musicboxd Profile</h1>
         <button id="logoutBtn" class="btn" style="display:none">Logout</button>
       </div>
 
@@ -131,7 +131,7 @@
           </div>
         </div>
 
-        <h3 style="margin-top:12px">Saved Reviews</h3>
+        <h3 style="margin-top:12px;color:#000">Saved Reviews</h3>
         <div id="reviewsList" class="profile">
           <p class="empty">No reviews yet.</p>
         </div>

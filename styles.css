@@ -1,8 +1,8 @@
 :root{
-  --bg:#f6f8fb;
-  --card:#ffffff;
-  --accent:#4b6cff;
-  --muted:#6b7280;
+  --bg:#E2A7E2;
+  --card:#BF40BF;
+  --accent:#40BFBF;
+  --muted:#01050c;
   --success:#16a34a;
 }
 *{box-sizing:border-box}
@@ -10,17 +10,17 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;
 .container{max-width:880px;margin:28px auto;padding:20px}
 h1{margin:0 0 12px}
 .lead{color:var(--muted);margin:0 0 12px}
-.form-card,.preview-card{background:var(--card);border-radius:8px;padding:18px;margin-bottom:18px;box-shadow:0 1px 2px rgba(16,24,40,0.04)}
+.form-card,.preview-card{background:var(--card);border-radius:8px;padding:18px;margin-bottom:18px;box-shadow:0 1px 2px rgba(239, 240, 241, 0.666);color:#C0C0C0}
 .album-row{display:grid;grid-template-columns:1fr 1fr 80px;gap:10px;margin-bottom:10px;align-items:center}
 label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px}
-input[type="text"]{padding:8px 10px;border:1px solid #e6eef9;border-radius:6px;font-size:14px;width:100%}
+input[type="text"]{padding:8px 10px;border:1px solid #C0C0C0;border-radius:6px;font-size:14px;width:100%}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.btn{background:#fff;border:1px solid #dbe7ff;padding:8px 12px;border-radius:6px;cursor:pointer}
-.btn.primary{background:linear-gradient(180deg,var(--accent),#3955ff);color:white;border:none}
+.btn{background:linear-gradient(180deg,var(--accent),hwb(316 15% 32% / 0.696));color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,var(--accent),hwb(316 15% 32% / 0.696));color:white;border:none}
 .file-btn{position:relative;overflow:hidden}
 .file-btn input{position:absolute;left:0;top:0;opacity:0}
 .profile{min-height:80px}
-.profile .item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px dashed #eef2ff}
+.profile .item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px dashed #C0C0C0}
 .profile .idx{font-weight:600;color:var(--accent);min-width:24px}
 .profile .title{font-weight:600}
 .profile .artist{color:var(--muted)}
@@ -30,7 +30,7 @@ footer.note{font-size:13px;color:var(--muted);text-align:center;margin-top:6px}
 
 /* Avatar / profile picture styles */
 .avatar-row{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-.avatar-preview{width:120px;height:120px;border-radius:999px;background:#f3f6ff;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:2px solid #eef4ff}
+.avatar-preview{width:120px;height:120px;border-radius:999px;background:#40BFBF;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:2px solid #eef4ff}
 .avatar-preview img{width:100%;height:100%;object-fit:cover;display:none}
 .avatar-preview .avatar-empty{color:var(--muted);font-size:13px}
 .avatar-controls input[type="file"]{display:block;margin-bottom:8px}
@@ -47,9 +47,9 @@ footer.note{font-size:13px;color:var(--muted);text-align:center;margin-top:6px}
 
 /* Reviews list */
 .reviews-list{display:flex;flex-direction:column;gap:8px}
-.review-item{padding:10px;border-radius:8px;border:1px solid #eef4ff;background:linear-gradient(180deg,#fff,#fbfcff)}
+.review-item{padding:10px;border-radius:8px;border:1px solid #f0eef0;background:linear-gradient(180deg,#fff,#40BFBF); color:#000}
 .review-item .meta{display:flex;flex-direction:column;gap:6px}
-.review-item .target{font-weight:600}
+.review-item .target{font-weight:600;color:#000}
 .review-item .review-text{min-height:48px}
 .review-controls{display:flex;gap:8px;margin-top:8px}
 .review-controls .btn{padding:6px 10px;font-size:13px}
