@@ -1,5 +1,5 @@
 import { account, databases } from '../appwrite.js';
-import { ID, Query } from 'appwrite';
+import { ID, Query, Permission, Role } from 'appwrite';
 
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 const PROFILES_COLLECTION_ID = import.meta.env.VITE_PROFILES_COLLECTION_ID || 'profiles';
@@ -185,12 +185,18 @@ export async function createReview(albumName, artistName, reviewText, rating) {
       ID.unique(),
       {
         user_id: userId,
-        albumName,
-        artistName,
-        reviewText,
-        rating,
+        album_name: albumName,
+        artist_name: artistName,
+        review_text: reviewText,
+        rating: rating.toString(), // Convert to string since field is string type
         likes_count: 0
-      }
+      },
+      [
+        // Set document-level permissions using correct Appwrite SDK syntax
+        Permission.read(Role.any()), // Anyone can read reviews
+        Permission.update(Role.user(userId)), // Only creator can update
+        Permission.delete(Role.user(userId)) // Only creator can delete
+      ]
     );
 
     return review;
@@ -226,11 +232,18 @@ export async function getUserReviews() {
  */
 export async function updateReview(reviewId, data) {
   try {
+    // Convert camelCase to snake_case for database
+    const updateData = {};
+    if (data.albumName !== undefined) updateData.album_name = data.albumName;
+    if (data.artistName !== undefined) updateData.artist_name = data.artistName;
+    if (data.reviewText !== undefined) updateData.review_text = data.reviewText;
+    if (data.rating !== undefined) updateData.rating = data.rating.toString();
+    
     const updated = await databases.updateDocument(
       DATABASE_ID,
       REVIEWS_COLLECTION_ID,
       reviewId,
-      data
+      updateData
     );
 
     return updated;

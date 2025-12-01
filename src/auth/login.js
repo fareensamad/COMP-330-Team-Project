@@ -57,11 +57,16 @@ async function ensureLoggedIn(){
     return;
   }
   
+  // IMPORTANT: Hide both sections first to prevent flash
+  if(authSection) authSection.style.display = 'none';
+  if(appMain) appMain.style.display = 'none';
+  
   // Check if there's an active session
   const user = await getSession();
   
   if(user){
-    // User is logged in, show the app
+    // User is logged in, dispatch event for app initialization
+    window.dispatchEvent(new CustomEvent('appwrite-authenticated', { detail: { user } }));
     showApp();
   } else {
     // No session, show auth form

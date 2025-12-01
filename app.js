@@ -547,16 +547,18 @@ async function renderReviews(){
       const target = document.createElement('div'); 
       target.className = 'target';
       
-      const title = r.albumName + (r.artistName ? ` — ${r.artistName}` : '');
-      target.textContent = `${r.albumName ? 'Album/Song' : 'Review'} — ${title}`;
+      // Use snake_case field names from database
+      const title = r.album_name + (r.artist_name ? ` — ${r.artist_name}` : '');
+      target.textContent = `${r.album_name ? 'Album/Song' : 'Review'} — ${title}`;
       meta.appendChild(target);
       
       // Stars
       const ratingWrap = document.createElement('div'); 
       ratingWrap.className = 'rating';
+      const ratingValue = parseInt(r.rating) || 0;
       for(let s=1;s<=5;s++){ 
         const star = document.createElement('span'); 
-        star.className = 'star' + ((r.rating||0) >= s ? ' filled':''); 
+        star.className = 'star' + (ratingValue >= s ? ' filled':''); 
         star.textContent = '★'; 
         ratingWrap.appendChild(star); 
       }
@@ -565,7 +567,7 @@ async function renderReviews(){
       // Text
       const txt = document.createElement('div'); 
       txt.className = 'review-text'; 
-      txt.textContent = r.reviewText || '';
+      txt.textContent = r.review_text || '';
       meta.appendChild(txt);
       
       // Controls
@@ -608,11 +610,12 @@ async function editReview(id){
     const textEl = document.getElementById('reviewText');
     
     if(typeSel) typeSel.value = 'album'; // Default to album
-    if(nameEl) nameEl.value = r.albumName || '';
-    if(artistEl) artistEl.value = r.artistName || '';
-    if(textEl) textEl.value = r.reviewText || '';
+    // Use snake_case field names from database
+    if(nameEl) nameEl.value = r.album_name || '';
+    if(artistEl) artistEl.value = r.artist_name || '';
+    if(textEl) textEl.value = r.review_text || '';
     
-    currentReviewRating = Number(r.rating || 0);
+    currentReviewRating = parseInt(r.rating) || 0;
     const container = document.getElementById('reviewRating');
     if(container){ 
       [...container.querySelectorAll('.star')].forEach(sp=> 
