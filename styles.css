@@ -15,12 +15,12 @@ h1{margin:0 0 12px}
 label{font-size:13px;color:var(--muted);display:block;margin-bottom:4px}
 input[type="text"]{padding:8px 10px;border:1px solid #C0C0C0;border-radius:6px;font-size:14px;width:100%}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.btn{background:#fff;border:1px solid #dbe7ff;padding:8px 12px;border-radius:6px;cursor:pointer}
-.btn.primary{background:linear-gradient(180deg,var(--accent),#3955ff);color:white;border:none}
+.btn{background:linear-gradient(180deg, var(--accent),hwb(316, 15%, 32% / 0.696));color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,var(--accent),hwb(316, 15%, 32% / 0.696));color:white;border:none}
 .file-btn{position:relative;overflow:hidden}
 .file-btn input{position:absolute;left:0;top:0;opacity:0}
 .profile{min-height:80px}
-.profile .item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px dashed #eef2ff}
+.profile .item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px dashed #C0C0C0}
 .profile .idx{font-weight:600;color:var(--accent);min-width:24px}
 .profile .title{font-weight:600}
 .profile .artist{color:var(--muted)}
@@ -47,9 +47,9 @@ footer.note{font-size:13px;color:var(--muted);text-align:center;margin-top:6px}
 
 /* Reviews list */
 .reviews-list{display:flex;flex-direction:column;gap:8px}
-.review-item{padding:10px;border-radius:8px;border:1px solid #eef4ff;background:linear-gradient(180deg,#fff,#fbfcff)}
+.review-item{padding:10px;border-radius:8px;border:1px solid #f0eef0;background:linear-gradient(180deg,#fff,#40BFBF); color:#000}
 .review-item .meta{display:flex;flex-direction:column;gap:6px}
-.review-item .target{font-weight:600}
+.review-item .target{font-weight:600;color:#000}
 .review-item .review-text{min-height:48px}
 .review-controls{display:flex;gap:8px;margin-top:8px}
 .review-controls .btn{padding:6px 10px;font-size:13px}
