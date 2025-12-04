@@ -9,6 +9,7 @@ const songsPreview = document.getElementById('songsPreview');
 // Avatar/profile image - now using Appwrite database
 const avatarInput = document.getElementById('avatarInput');
 const avatarPreviewImg = document.getElementById('avatarPreviewImg');
+let pendingAvatarDataUrl = null; // Store the selected image data URL before saving
 
 // Reviews
 let editingReviewId = null;
@@ -373,12 +374,70 @@ async function importSongs(file){
 
 // ========== AVATAR (Using Appwrite Database) ==========
 
+/**
+ * Compress and resize image to fit within Appwrite's 50,000 character limit
+ */
+function compressImage(dataUrl, maxSize = 45000, maxWidth = 300, maxHeight = 300) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      // Calculate new dimensions
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = width * ratio;
+        height = height * ratio;
+      }
+      
+      // Create canvas and resize
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convert to base64 with compression
+      let quality = 0.9;
+      let compressed = canvas.toDataURL('image/jpeg', quality);
+      
+      // If still too large, reduce quality
+      while (compressed.length > maxSize && quality > 0.1) {
+        quality -= 0.1;
+        compressed = canvas.toDataURL('image/jpeg', quality);
+      }
+      
+      if (compressed.length > maxSize) {
+        // If still too large, try PNG (might be smaller for some images)
+        compressed = canvas.toDataURL('image/png');
+        if (compressed.length > maxSize) {
+          reject(new Error('Image is too large even after compression. Please use a smaller image.'));
+          return;
+        }
+      }
+      
+      resolve(compressed);
+    };
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = dataUrl;
+  });
+}
+
 function handleAvatarFile(file, cb){
   if(!file) return cb && cb(new Error('No file'));
   const maxBytes = 2 * 1024 * 1024;
   if(file.size > maxBytes) return cb && cb(new Error('File too large (max 2MB)'));
   const reader = new FileReader();
-  reader.onload = e => cb && cb(null, e.target.result);
+  reader.onload = async (e) => {
+    try {
+      // Compress the image before returning
+      const compressed = await compressImage(e.target.result);
+      cb(null, compressed);
+    } catch (error) {
+      cb(error);
+    }
+  };
   reader.onerror = e => cb && cb(new Error('Failed reading file'));
   reader.readAsDataURL(file);
 }
@@ -397,8 +456,13 @@ async function saveAvatar(dataUrl){
 
 async function removeAvatar(){
   try {
-    await updateProfilePicture('');
-    await renderAvatar();
+    if(confirm('Remove your profile picture?')) {
+      await updateProfilePicture('');
+      pendingAvatarDataUrl = null; // Clear any pending image
+      if(avatarInput) avatarInput.value = ''; // Clear file input
+      await renderAvatar();
+      alert('Profile picture removed.');
+    }
   } catch (error) {
     console.error('Remove avatar error:', error);
     alert('Failed to remove avatar: ' + error.message);
@@ -445,8 +509,21 @@ async function exportAvatar(){
 
 function importAvatar(file){
   handleAvatarFile(file, async (err, dataUrl)=>{
-    if(err){ alert('Import failed: ' + err.message); return; }
+    if(err){ 
+      alert('Import failed: ' + err.message); 
+      pendingAvatarDataUrl = null;
+      return; 
+    }
+    // Store for saving
+    pendingAvatarDataUrl = dataUrl;
+    // Show preview
+    avatarPreviewImg.src = dataUrl;
+    avatarPreviewImg.style.display = 'block';
+    const empty = avatarPreviewImg.parentElement.querySelector('.avatar-empty');
+    if(empty) empty.style.display = 'none';
+    // Auto-save on import
     await saveAvatar(dataUrl);
+    pendingAvatarDataUrl = null;
   });
 }
 
@@ -833,18 +910,38 @@ async function initializeApp() {
   if(avatarInput){
     avatarInput.addEventListener('change', (e)=>{
       const f = e.target.files && e.target.files[0];
-      if(f) handleAvatarFile(f, (err, dataUrl)=>{ 
-        if(err) alert(err.message); 
-        else avatarPreviewImg.src = dataUrl; 
-      });
-      e.target.value = null;
+      if(f) {
+        handleAvatarFile(f, (err, dataUrl)=>{ 
+          if(err) {
+            alert(err.message);
+            pendingAvatarDataUrl = null;
+          } else {
+            // Store the data URL for saving
+            pendingAvatarDataUrl = dataUrl;
+            // Show preview
+            avatarPreviewImg.src = dataUrl;
+            avatarPreviewImg.style.display = 'block';
+            const empty = avatarPreviewImg.parentElement.querySelector('.avatar-empty');
+            if(empty) empty.style.display = 'none';
+          }
+        });
+      }
+      // Don't clear the input value here - let user see what they selected
     });
   }
   if(saveAvatarBtn) saveAvatarBtn.addEventListener('click', async ()=>{
-    if(avatarPreviewImg && avatarPreviewImg.src && avatarPreviewImg.src.startsWith('data:')) {
+    // Check if there's a pending image to save
+    if(pendingAvatarDataUrl) {
+      await saveAvatar(pendingAvatarDataUrl);
+      pendingAvatarDataUrl = null; // Clear after saving
+      // Clear the file input
+      if(avatarInput) avatarInput.value = '';
+    } else if(avatarPreviewImg && avatarPreviewImg.src && avatarPreviewImg.src.startsWith('data:')) {
+      // Fallback: try to save from preview if no pending data
       await saveAvatar(avatarPreviewImg.src);
+      if(avatarInput) avatarInput.value = '';
     } else {
-      alert('Please choose an image first.');
+      alert('Please choose an image first by clicking the file input or "Import Image" button.');
     }
   });
   if(removeAvatarBtn) removeAvatarBtn.addEventListener('click', removeAvatar);
