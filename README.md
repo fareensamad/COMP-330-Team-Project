@@ -1,5 +1,5 @@
 # COMP-330-Team-Project
-This project is a music review webiste
+This project is a music review website
 
 To run:
 1. Open this repo in a code editor
