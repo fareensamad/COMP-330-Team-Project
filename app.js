@@ -1,4 +1,4 @@
-import { getTopAlbums, updateTopAlbums, getTopSongs, updateTopSongs, createReview, getUserReviews, updateReview, deleteReview as dbDeleteReview, getCurrentUserId, getOrCreateProfile, updateProfilePicture, getProfilePicture } from './src/db/dbHelper.js';
+import { getTopAlbums, updateTopAlbums, getTopSongs, updateTopSongs, createReview, getUserReviews, getAllReviews, updateReview, getCurrentUserId, getOrCreateProfile, updateProfilePicture, getProfilePicture, likeReview, unlikeReview, hasUserLikedReview, getReviewLikeCount } from './src/db/dbHelper.js';
 import { databases } from './src/appwrite.js';
 
 const albumsList = document.getElementById('albumsList');
@@ -530,7 +530,9 @@ async function renderReviews(){
   
   try {
     container.innerHTML = '<p class="empty">Loading...</p>';
-    const reviews = await getUserReviews();
+    // Get all reviews so users can like any review
+    const reviews = await getAllReviews();
+    const currentUserId = await getCurrentUserId();
     
     container.innerHTML = '';
     
@@ -539,7 +541,8 @@ async function renderReviews(){
       return; 
     }
     
-    reviews.forEach(r => {
+    // Process each review and add like information
+    for (const r of reviews) {
       const item = document.createElement('div'); 
       item.className = 'review-item';
       const meta = document.createElement('div'); 
@@ -570,27 +573,48 @@ async function renderReviews(){
       txt.textContent = r.review_text || '';
       meta.appendChild(txt);
       
-      // Controls
+      // Like section
+      const likeSection = document.createElement('div');
+      likeSection.className = 'like-section';
+      
+      // Check if current user has liked this review
+      const hasLiked = currentUserId ? await hasUserLikedReview(r.$id) : false;
+      const likeCount = await getReviewLikeCount(r.$id);
+      
+      // Like button
+      const likeBtn = document.createElement('button');
+      likeBtn.className = 'btn like-btn' + (hasLiked ? ' liked' : '');
+      likeBtn.textContent = hasLiked ? '❤️ Liked' : '🤍 Like';
+      likeBtn.dataset.reviewId = r.$id;
+      likeBtn.dataset.liked = hasLiked ? 'true' : 'false';
+      likeBtn.addEventListener('click', handleLikeClick);
+      
+      // Like count
+      const likeCountEl = document.createElement('span');
+      likeCountEl.className = 'like-count';
+      likeCountEl.textContent = likeCount > 0 ? ` (${likeCount})` : '';
+      
+      likeSection.appendChild(likeBtn);
+      likeSection.appendChild(likeCountEl);
+      meta.appendChild(likeSection);
+      
+      // Controls (only show edit for user's own reviews)
       const controls = document.createElement('div'); 
       controls.className = 'review-controls';
-      const editBtn = document.createElement('button'); 
-      editBtn.className = 'btn'; 
-      editBtn.textContent = 'Edit'; 
-      editBtn.addEventListener('click', ()=> editReview(r.$id));
-      const delBtn = document.createElement('button'); 
-      delBtn.className = 'btn'; 
-      delBtn.textContent = 'Delete'; 
-      delBtn.addEventListener('click', async ()=>{ 
-        if(confirm('Delete this review?')){ 
-          await deleteReview(r.$id); 
-        } 
-      });
-      controls.appendChild(editBtn); 
-      controls.appendChild(delBtn);
+      
+      // Only show edit button if this is the current user's review
+      if (currentUserId && r.user_id === currentUserId) {
+        const editBtn = document.createElement('button'); 
+        editBtn.className = 'btn'; 
+        editBtn.textContent = 'Edit'; 
+        editBtn.addEventListener('click', ()=> editReview(r.$id));
+        controls.appendChild(editBtn);
+      }
+      
       item.appendChild(meta); 
       item.appendChild(controls);
       container.appendChild(item);
-    });
+    }
   } catch (error) {
     console.error('Render reviews error:', error);
     container.innerHTML = '<p class="empty">Error loading reviews.</p>';
@@ -599,7 +623,7 @@ async function renderReviews(){
 
 async function editReview(id){
   try {
-    const reviews = await getUserReviews();
+    const reviews = await getAllReviews();
     const r = reviews.find(rr=> rr.$id === id); 
     if(!r) return;
     
@@ -629,13 +653,37 @@ async function editReview(id){
   }
 }
 
-async function deleteReview(id){
+async function handleLikeClick(event){
+  const likeBtn = event.target.closest('.like-btn');
+  if(!likeBtn) return;
+  
+  const reviewId = likeBtn.dataset.reviewId;
+  const isLiked = likeBtn.dataset.liked === 'true';
+  
   try {
-    await dbDeleteReview(id);
-    await renderReviews();
+    if(isLiked){
+      // Unlike the review
+      await unlikeReview(reviewId);
+      likeBtn.textContent = '🤍 Like';
+      likeBtn.classList.remove('liked');
+      likeBtn.dataset.liked = 'false';
+    } else {
+      // Like the review
+      await likeReview(reviewId);
+      likeBtn.textContent = '❤️ Liked';
+      likeBtn.classList.add('liked');
+      likeBtn.dataset.liked = 'true';
+    }
+    
+    // Update like count display
+    const likeCount = await getReviewLikeCount(reviewId);
+    const likeCountEl = likeBtn.nextElementSibling;
+    if(likeCountEl && likeCountEl.classList.contains('like-count')){
+      likeCountEl.textContent = likeCount > 0 ? ` (${likeCount})` : '';
+    }
   } catch (error) {
-    console.error('Delete review error:', error);
-    alert('Failed to delete review: ' + error.message);
+    console.error('Error toggling like:', error);
+    alert('Failed to ' + (isLiked ? 'unlike' : 'like') + ' review: ' + error.message);
   }
 }
 
