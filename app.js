@@ -1,4 +1,4 @@
-import { getTopAlbums, updateTopAlbums, getTopSongs, updateTopSongs, createReview, getUserReviews, getAllReviews, updateReview, getCurrentUserId, getOrCreateProfile, updateProfilePicture, getProfilePicture, likeReview, unlikeReview, hasUserLikedReview, getReviewLikeCount } from './src/db/dbHelper.js';
+import { getTopAlbums, updateTopAlbums, getTopSongs, updateTopSongs, createReview, getUserReviews, getAllReviews, updateReview, deleteReview as dbDeleteReview, getCurrentUserId, getOrCreateProfile, updateProfilePicture, getProfilePicture, likeReview, unlikeReview, hasUserLikedReview, getReviewLikeCount } from './src/db/dbHelper.js';
 import { databases } from './src/appwrite.js';
 
 const albumsList = document.getElementById('albumsList');
@@ -598,17 +598,32 @@ async function renderReviews(){
       likeSection.appendChild(likeCountEl);
       meta.appendChild(likeSection);
       
-      // Controls (only show edit for user's own reviews)
+      // Controls (only show edit/delete for user's own reviews)
       const controls = document.createElement('div'); 
       controls.className = 'review-controls';
       
-      // Only show edit button if this is the current user's review
+      // Only show edit and delete buttons if this is the current user's review
       if (currentUserId && r.user_id === currentUserId) {
         const editBtn = document.createElement('button'); 
         editBtn.className = 'btn'; 
         editBtn.textContent = 'Edit'; 
         editBtn.addEventListener('click', ()=> editReview(r.$id));
         controls.appendChild(editBtn);
+        
+        const delBtn = document.createElement('button'); 
+        delBtn.className = 'btn'; 
+        delBtn.textContent = 'Delete'; 
+        delBtn.addEventListener('click', async ()=>{ 
+          if(confirm('Delete this review?')){ 
+            try {
+              await deleteReview(r.$id);
+            } catch (error) {
+              // Error is already handled in deleteReview function
+              console.error('Error in delete button handler:', error);
+            }
+          } 
+        });
+        controls.appendChild(delBtn);
       }
       
       item.appendChild(meta); 
@@ -684,6 +699,21 @@ async function handleLikeClick(event){
   } catch (error) {
     console.error('Error toggling like:', error);
     alert('Failed to ' + (isLiked ? 'unlike' : 'like') + ' review: ' + error.message);
+  }
+}
+
+async function deleteReview(id){
+  try {
+    if (!id) {
+      alert('Invalid review ID');
+      return;
+    }
+    
+    await dbDeleteReview(id);
+    await renderReviews();
+  } catch (error) {
+    console.error('Delete review error:', error);
+    alert('Failed to delete review: ' + error.message);
   }
 }
 
