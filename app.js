@@ -601,6 +601,96 @@ async function addOrSaveReview(){
   }
 }
 
+// Helper function to create a review item element
+async function createReviewItem(r, currentUserId) {
+  const item = document.createElement('div'); 
+  item.className = 'review-item';
+  const meta = document.createElement('div'); 
+  meta.className = 'meta';
+  const target = document.createElement('div'); 
+  target.className = 'target';
+  
+  // Use snake_case field names from database
+  const title = r.album_name + (r.artist_name ? ` — ${r.artist_name}` : '');
+  target.textContent = `${r.album_name ? 'Album/Song' : 'Review'} — ${title}`;
+  meta.appendChild(target);
+  
+  // Stars
+  const ratingWrap = document.createElement('div'); 
+  ratingWrap.className = 'rating';
+  const ratingValue = parseInt(r.rating) || 0;
+  for(let s=1;s<=5;s++){ 
+    const star = document.createElement('span'); 
+    star.className = 'star' + (ratingValue >= s ? ' filled':''); 
+    star.textContent = '★'; 
+    ratingWrap.appendChild(star); 
+  }
+  meta.appendChild(ratingWrap);
+  
+  // Text
+  const txt = document.createElement('div'); 
+  txt.className = 'review-text'; 
+  txt.textContent = r.review_text || '';
+  meta.appendChild(txt);
+  
+  // Like section
+  const likeSection = document.createElement('div');
+  likeSection.className = 'like-section';
+  
+  // Check if current user has liked this review
+  const hasLiked = currentUserId ? await hasUserLikedReview(r.$id) : false;
+  const likeCount = await getReviewLikeCount(r.$id);
+  
+  // Like button
+  const likeBtn = document.createElement('button');
+  likeBtn.className = 'btn like-btn' + (hasLiked ? ' liked' : '');
+  likeBtn.textContent = hasLiked ? '❤️ Liked' : '🤍 Like';
+  likeBtn.dataset.reviewId = r.$id;
+  likeBtn.dataset.liked = hasLiked ? 'true' : 'false';
+  likeBtn.addEventListener('click', handleLikeClick);
+  
+  // Like count
+  const likeCountEl = document.createElement('span');
+  likeCountEl.className = 'like-count';
+  likeCountEl.textContent = likeCount > 0 ? ` (${likeCount})` : '';
+  
+  likeSection.appendChild(likeBtn);
+  likeSection.appendChild(likeCountEl);
+  meta.appendChild(likeSection);
+  
+  // Controls (only show edit/delete for user's own reviews)
+  const controls = document.createElement('div'); 
+  controls.className = 'review-controls';
+  
+  // Only show edit and delete buttons if this is the current user's review
+  if (currentUserId && r.user_id === currentUserId) {
+    const editBtn = document.createElement('button'); 
+    editBtn.className = 'btn'; 
+    editBtn.textContent = 'Edit'; 
+    editBtn.addEventListener('click', ()=> editReview(r.$id));
+    controls.appendChild(editBtn);
+    
+    const delBtn = document.createElement('button'); 
+    delBtn.className = 'btn'; 
+    delBtn.textContent = 'Delete'; 
+    delBtn.addEventListener('click', async ()=>{ 
+      if(confirm('Delete this review?')){ 
+        try {
+          await deleteReview(r.$id);
+        } catch (error) {
+          // Error is already handled in deleteReview function
+          console.error('Error in delete button handler:', error);
+        }
+      } 
+    });
+    controls.appendChild(delBtn);
+  }
+  
+  item.appendChild(meta); 
+  item.appendChild(controls);
+  return item;
+}
+
 async function renderReviews(){
   const container = document.getElementById('reviewsList');
   if(!container) return;
@@ -618,94 +708,68 @@ async function renderReviews(){
       return; 
     }
     
-    // Process each review and add like information
+    // Separate reviews into user's own and other users'
+    const userReviews = [];
+    const otherReviews = [];
+    
     for (const r of reviews) {
-      const item = document.createElement('div'); 
-      item.className = 'review-item';
-      const meta = document.createElement('div'); 
-      meta.className = 'meta';
-      const target = document.createElement('div'); 
-      target.className = 'target';
-      
-      // Use snake_case field names from database
-      const title = r.album_name + (r.artist_name ? ` — ${r.artist_name}` : '');
-      target.textContent = `${r.album_name ? 'Album/Song' : 'Review'} — ${title}`;
-      meta.appendChild(target);
-      
-      // Stars
-      const ratingWrap = document.createElement('div'); 
-      ratingWrap.className = 'rating';
-      const ratingValue = parseInt(r.rating) || 0;
-      for(let s=1;s<=5;s++){ 
-        const star = document.createElement('span'); 
-        star.className = 'star' + (ratingValue >= s ? ' filled':''); 
-        star.textContent = '★'; 
-        ratingWrap.appendChild(star); 
-      }
-      meta.appendChild(ratingWrap);
-      
-      // Text
-      const txt = document.createElement('div'); 
-      txt.className = 'review-text'; 
-      txt.textContent = r.review_text || '';
-      meta.appendChild(txt);
-      
-      // Like section
-      const likeSection = document.createElement('div');
-      likeSection.className = 'like-section';
-      
-      // Check if current user has liked this review
-      const hasLiked = currentUserId ? await hasUserLikedReview(r.$id) : false;
-      const likeCount = await getReviewLikeCount(r.$id);
-      
-      // Like button
-      const likeBtn = document.createElement('button');
-      likeBtn.className = 'btn like-btn' + (hasLiked ? ' liked' : '');
-      likeBtn.textContent = hasLiked ? '❤️ Liked' : '🤍 Like';
-      likeBtn.dataset.reviewId = r.$id;
-      likeBtn.dataset.liked = hasLiked ? 'true' : 'false';
-      likeBtn.addEventListener('click', handleLikeClick);
-      
-      // Like count
-      const likeCountEl = document.createElement('span');
-      likeCountEl.className = 'like-count';
-      likeCountEl.textContent = likeCount > 0 ? ` (${likeCount})` : '';
-      
-      likeSection.appendChild(likeBtn);
-      likeSection.appendChild(likeCountEl);
-      meta.appendChild(likeSection);
-      
-      // Controls (only show edit/delete for user's own reviews)
-      const controls = document.createElement('div'); 
-      controls.className = 'review-controls';
-      
-      // Only show edit and delete buttons if this is the current user's review
       if (currentUserId && r.user_id === currentUserId) {
-        const editBtn = document.createElement('button'); 
-        editBtn.className = 'btn'; 
-        editBtn.textContent = 'Edit'; 
-        editBtn.addEventListener('click', ()=> editReview(r.$id));
-        controls.appendChild(editBtn);
-        
-        const delBtn = document.createElement('button'); 
-        delBtn.className = 'btn'; 
-        delBtn.textContent = 'Delete'; 
-        delBtn.addEventListener('click', async ()=>{ 
-          if(confirm('Delete this review?')){ 
-            try {
-              await deleteReview(r.$id);
-            } catch (error) {
-              // Error is already handled in deleteReview function
-              console.error('Error in delete button handler:', error);
-            }
-          } 
-        });
-        controls.appendChild(delBtn);
+        userReviews.push(r);
+      } else {
+        otherReviews.push(r);
+      }
+    }
+    
+    // Create section for user's own reviews
+    if (userReviews.length > 0) {
+      const userSection = document.createElement('div');
+      userSection.className = 'reviews-section';
+      
+      const userSectionTitle = document.createElement('h4');
+      userSectionTitle.textContent = 'My Reviews';
+      userSectionTitle.style.marginBottom = '12px';
+      userSectionTitle.style.color = '#000';
+      userSection.appendChild(userSectionTitle);
+      
+      const userReviewsContainer = document.createElement('div');
+      userReviewsContainer.className = 'reviews-list';
+      
+      for (const r of userReviews) {
+        const item = await createReviewItem(r, currentUserId);
+        userReviewsContainer.appendChild(item);
       }
       
-      item.appendChild(meta); 
-      item.appendChild(controls);
-      container.appendChild(item);
+      userSection.appendChild(userReviewsContainer);
+      container.appendChild(userSection);
+    }
+    
+    // Create section for other users' reviews
+    if (otherReviews.length > 0) {
+      const otherSection = document.createElement('div');
+      otherSection.className = 'reviews-section';
+      otherSection.style.marginTop = userReviews.length > 0 ? '24px' : '0';
+      
+      const otherSectionTitle = document.createElement('h4');
+      otherSectionTitle.textContent = 'Other Users\' Reviews';
+      otherSectionTitle.style.marginBottom = '12px';
+      otherSectionTitle.style.color = '#000';
+      otherSection.appendChild(otherSectionTitle);
+      
+      const otherReviewsContainer = document.createElement('div');
+      otherReviewsContainer.className = 'reviews-list';
+      
+      for (const r of otherReviews) {
+        const item = await createReviewItem(r, currentUserId);
+        otherReviewsContainer.appendChild(item);
+      }
+      
+      otherSection.appendChild(otherReviewsContainer);
+      container.appendChild(otherSection);
+    }
+    
+    // Show message if no reviews in either section
+    if (userReviews.length === 0 && otherReviews.length === 0) {
+      container.innerHTML = '<p class="empty">No reviews yet.</p>';
     }
   } catch (error) {
     console.error('Render reviews error:', error);
